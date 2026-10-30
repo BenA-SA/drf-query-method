@@ -53,6 +53,7 @@ lint = [
 ]
 test = [
     "coverage",
+    "django-filter",
     "pytest",
     "pytest-django",
 ]
@@ -64,6 +65,9 @@ docs = [
     "mkdocstrings-python",
 ]
 
+[project.optional-dependencies]
+django-filter = ["django-filter"]
+
 [project.urls]
 bugs = "https://github.com/BenA-SA/drf-query-method/issues"
 changelog = "https://github.com/BenA-SA/drf-query-method/releases"
@@ -74,6 +78,11 @@ homepage = "https://github.com/BenA-SA/drf-query-method"
 # All rules are enabled as "error" by default; no need to specify unless overriding.
 # Example override: relax a rule for the entire project (uncomment if needed).
 # rules.TY015 = "warn"  # For invalid-argument-type, warn instead of error.
+
+[[tool.ty.overrides]]
+# These tests use attributes that patch() adds to DRF at runtime.
+include = ["tests/test_patching.py"]
+rules = { unresolved-attribute = "ignore" }
 
 [tool.ruff]
 line-length = 120

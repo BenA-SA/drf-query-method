@@ -18,23 +18,36 @@ parameters are too long or too structured for a URL.
 * Created by [Ben Atkinson](https://streamlinedanalytics.co.uk) | GitHub [@BenA-SA](https://github.com/BenA-SA)
 * BSD 3-Clause License
 
-## Status
+## Usage
 
-Early development; nothing is released yet. The plan:
+Define a `query()` handler, then call `patch()` once at startup:
 
-* Opt-in classes: a router that maps `QUERY` to a viewset's `query()`, `SearchFilter` and `OrderingFilter` that read
-  the request body, permission classes that treat `QUERY` as safe, and test clients with `.query()`.
-* `request.filter_params`: the URL query parameters with a `QUERY` request's body merged over them.
-* An optional `drf_query_method.patch()` that applies all of the above to DRF itself, as if the upstream PR were merged.
-  If [django-filter](https://github.com/carltongibson/django-filter) is installed, it is patched too, so
-  `DjangoFilterBackend` reads the request body as well.
-* On Django versions before 6.2, `QUERY` is added to Django's allowed methods.
+```python
+import drf_query_method
+
+drf_query_method.patch()
+
+
+class NoteViewSet(ModelViewSet):
+    ...
+
+    def query(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
+```
+
+Routers then send `QUERY /notes/` to `query()`, and `SearchFilter`, `OrderingFilter` and django-filter's
+`DjangoFilterBackend` read their parameters from the request body. If you'd rather not patch DRF, import drop-in
+classes with the same names from `drf_query_method` instead. See the [documentation](https://BenA-SA.github.io/drf-query-method/usage/)
+for both approaches.
+
+The package is in early development and not yet released.
 
 ## Compatibility
 
 * Python 3.10+
 * Django 4.2, 5.0, 5.1, 5.2, 6.0 and 6.1. Django 6.2 adds `QUERY` natively; on earlier versions this package adds it.
 * Django REST framework 3.16+
+* django-filter, optionally
 
 ## Installation
 
