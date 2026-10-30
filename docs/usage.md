@@ -57,6 +57,8 @@ were merged:
 * DRF's deprecated OpenAPI generator leaves `QUERY` out, as OpenAPI 3.0 has no query operation.
 * If [django-filter](https://github.com/carltongibson/django-filter) is installed, `DjangoFilterBackend` reads the
   request body too.
+* If [django-rest-framework-datatables](https://github.com/izimobil/django-rest-framework-datatables) is installed, its
+  filter backends, pagination and renderer read the request body too. See [DataTables](#datatables) below.
 
 `patch()` is safe to call more than once, and leaves DRF alone once DRF supports `QUERY` itself.
 
@@ -72,6 +74,8 @@ Every class has the same name as DRF's (or django-filter's), so you change the i
 | `rest_framework.permissions.IsAuthenticatedOrReadOnly`, `DjangoModelPermissions`, `DjangoModelPermissionsOrAnonReadOnly`, `DjangoObjectPermissions`, `SAFE_METHODS` | `drf_query_method.permissions` |
 | `rest_framework.test.APIRequestFactory`, `APIClient`, `APITestCase` and friends | `drf_query_method.test` |
 | `django_filters.rest_framework.DjangoFilterBackend` | `drf_query_method.django_filters` |
+
+django-rest-framework-datatables is supported through `patch()` only.
 
 Use the router and viewset classes together: the viewsets stop a `query()` method answering `QUERY` on detail routes.
 
@@ -137,8 +141,23 @@ A few things to check before relying on `QUERY` in production:
   application through everything in front of it.
 * **Caching.** `QUERY` responses are cacheable in principle, but caches generally don't key on request bodies, and
   Django's `cache_page` ignores `QUERY` from 6.2. Don't expect responses to be cached.
-* **django-rest-framework-datatables** reads its parameters with its own helper, which looks at the request body only
-  for `POST`. It doesn't read `QUERY` bodies yet.
+## DataTables
+
+With `patch()` and [django-rest-framework-datatables](https://github.com/izimobil/django-rest-framework-datatables),
+a server-side DataTable can send its parameters as a `QUERY` body instead of a long query string. Keep `format=datatables`
+in the URL, and set the Ajax type:
+
+```javascript
+new DataTable("#notes", {
+  serverSide: true,
+  ajax: {url: "/api/notes/?format=datatables", type: "QUERY"},
+  columns: [{data: "title"}, {data: "created"}],
+});
+```
+
+jQuery sends DataTables' parameters as a form-encoded body for any method other than `GET` and `HEAD`, which is the
+form django-rest-framework-datatables expects. The view needs a `query()` handler, as above. Its `?keep=` parameter is
+still read from the URL.
 
 ## Django versions before 6.2
 

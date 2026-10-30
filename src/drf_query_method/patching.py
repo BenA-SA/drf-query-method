@@ -2,8 +2,9 @@
 
 :func:`patch` makes DRF behave as if encode/django-rest-framework#10091 were
 merged, so existing views, routers and settings pick up ``QUERY`` without
-changing imports. Call it once at startup, for example from an
-``AppConfig.ready()``. It does nothing to DRF once DRF supports ``QUERY``
+changing imports. When django-filter or django-rest-framework-datatables
+is installed, they read QUERY request bodies too. Call it once at startup,
+for example from an ``AppConfig.ready()``. It does nothing to DRF once DRF supports ``QUERY``
 itself.
 """
 
@@ -78,8 +79,28 @@ def _patch_django_filter() -> None:
     )
 
 
+def _patch_drf_datatables() -> None:
+    """Make django-rest-framework-datatables read QUERY request bodies.
+
+    Its modules import ``get_param`` by name, so each binding is replaced.
+    """
+    from rest_framework_datatables import filters, pagination, renderers, utils
+
+    from drf_query_method.params import filter_params
+
+    original = utils.get_param
+
+    def get_param(request, param, default=None):
+        if request.method == "QUERY":
+            return filter_params(request).get(param, default)
+        return original(request, param, default)
+
+    for module in (utils, filters, pagination, renderers):
+        _set(module, "get_param", get_param)
+
+
 def patch() -> None:
-    """Add QUERY support to Django, DRF and django-filter in place.
+    """Add QUERY support to Django, DRF, django-filter and django-rest-framework-datatables in place.
 
     Safe to call more than once. On Django versions before 6.2 this also
     calls :func:`~drf_query_method.add_query_method`, which :func:`unpatch`
@@ -95,6 +116,8 @@ def patch() -> None:
         _patch_drf()
     if importlib.util.find_spec("django_filters") is not None:
         _patch_django_filter()
+    if importlib.util.find_spec("rest_framework_datatables") is not None:
+        _patch_drf_datatables()
 
 
 def unpatch() -> None:

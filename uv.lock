@@ -409,6 +409,18 @@ wheels = [
 ]
 
 [[package]]
+name = "djangorestframework-datatables"
+version = "0.7.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "djangorestframework" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/c7/a0/7481fee713387fd5c632b05c1d95c32f5b2ea6e1e8f15c9cf1894e1895a8/djangorestframework_datatables-0.7.2.tar.gz", hash = "sha256:d7953968088ceb14968621a0c0a83d2f39ec1cda24b5ebe1240f3c9619bc7129", size = 19647, upload-time = "2024-06-14T17:11:41.742Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/f3/25/17cd01982c7299cbca9e20247e73c83bfa53a0ed9e8b7735c915c1bb6675/djangorestframework_datatables-0.7.2-py2.py3-none-any.whl", hash = "sha256:fd5747b1e3d0bfb84713a975394dd4d879b57ee8bc66cc0f97566fa67f4406f4", size = 15303, upload-time = "2024-06-14T17:11:39.658Z" },
+]
+
+[[package]]
 name = "drf-query-method"
 version = "0.1.0"
 source = { editable = "." }
@@ -430,6 +442,7 @@ dev = [
     { name = "coverage", version = "7.17.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "django-filter", version = "26.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "django-filter", version = "26.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+    { name = "djangorestframework-datatables" },
     { name = "pytest" },
     { name = "pytest-django" },
     { name = "ruff" },
@@ -449,6 +462,7 @@ test = [
     { name = "coverage", version = "7.17.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "django-filter", version = "26.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "django-filter", version = "26.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
+    { name = "djangorestframework-datatables" },
     { name = "pytest" },
     { name = "pytest-django" },
 ]
@@ -468,6 +482,7 @@ provides-extras = ["django-filter"]
 dev = [
     { name = "coverage" },
     { name = "django-filter" },
+    { name = "djangorestframework-datatables" },
     { name = "pytest" },
     { name = "pytest-django" },
     { name = "ruff" },
@@ -481,6 +496,7 @@ lint = [{ name = "ruff" }]
 test = [
     { name = "coverage" },
     { name = "django-filter" },
+    { name = "djangorestframework-datatables" },
     { name = "pytest" },
     { name = "pytest-django" },
 ]

@@ -96,7 +96,7 @@ jobs:
             drf_req="djangorestframework~=$DRF.0"
           fi
           uv venv --python "$PYTHON"
-          uv pip install -e . "$django_req" "$drf_req" django-filter coverage pytest pytest-django
+          uv pip install -e . "$django_req" "$drf_req" django-filter djangorestframework-datatables coverage pytest pytest-django
 
       - name: Run tests with coverage
         run: .venv/bin/coverage run -m pytest

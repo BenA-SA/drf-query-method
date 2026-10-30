@@ -35,8 +35,8 @@ class NoteViewSet(ModelViewSet):
         return self.list(request, *args, **kwargs)
 ```
 
-Routers then send `QUERY /notes/` to `query()`, and `SearchFilter`, `OrderingFilter` and django-filter's
-`DjangoFilterBackend` read their parameters from the request body. If you'd rather not patch DRF, import drop-in
+Routers then send `QUERY /notes/` to `query()`, and `SearchFilter`, `OrderingFilter`, django-filter's
+`DjangoFilterBackend` and django-rest-framework-datatables read their parameters from the request body. If you'd rather not patch DRF, import drop-in
 classes with the same names from `drf_query_method` instead. See the [documentation](https://BenA-SA.github.io/drf-query-method/usage/)
 for both approaches, and for sending `QUERY` requests from JavaScript and other clients.
 
@@ -47,7 +47,7 @@ The package is in early development and not yet released.
 * Python 3.10+
 * Django 4.2, 5.0, 5.1, 5.2, 6.0 and 6.1. Django 6.2 adds `QUERY` natively; on earlier versions this package adds it.
 * Django REST framework 3.16+
-* django-filter, optionally
+* django-filter and django-rest-framework-datatables, optionally
 
 ## Installation
 

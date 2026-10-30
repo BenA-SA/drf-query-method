@@ -6,6 +6,8 @@ from django.http import QueryDict
 from django.utils.datastructures import MultiValueDict
 from rest_framework.exceptions import ParseError
 
+_CACHE_ATTRIBUTE = "_drf_query_method_filter_params"
+
 
 def merge_filter_params(request) -> QueryDict:
     """Return ``request.query_params`` with a QUERY request's body merged over it.
@@ -17,10 +19,15 @@ def merge_filter_params(request) -> QueryDict:
     values, as repeated query-string parameters do.
 
     Raises ``ParseError`` (400) when the body is not an object of parameters,
-    such as a JSON array.
+    such as a JSON array. The result is cached on the request, as packages
+    such as django-rest-framework-datatables read many parameters each.
     """
     if request.method != "QUERY":
         return request.query_params
+
+    cached = request.__dict__.get(_CACHE_ATTRIBUTE)
+    if cached is not None:
+        return cached
 
     body = request.data
     if not isinstance(body, Mapping):
@@ -32,6 +39,7 @@ def merge_filter_params(request) -> QueryDict:
     params = request.query_params.copy()
     for key, values in body.lists():
         params.setlist(key, values)
+    request.__dict__[_CACHE_ATTRIBUTE] = params
     return params
 
 

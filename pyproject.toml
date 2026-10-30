@@ -54,6 +54,7 @@ lint = [
 test = [
     "coverage",
     "django-filter",
+    "djangorestframework-datatables",
     "pytest",
     "pytest-django",
 ]
@@ -81,7 +82,7 @@ homepage = "https://github.com/BenA-SA/drf-query-method"
 
 [[tool.ty.overrides]]
 # These tests use attributes that patch() adds to DRF at runtime.
-include = ["tests/test_patching.py"]
+include = ["tests/test_patching.py", "tests/test_datatables.py"]
 rules = { unresolved-attribute = "ignore" }
 
 [tool.ruff]
