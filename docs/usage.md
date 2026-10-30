@@ -135,8 +135,8 @@ A few things to check before relying on `QUERY` in production:
     CORS_ALLOW_METHODS = (*default_methods, "QUERY")
     ```
 
-* **CSRF.** None needed on Django 6.2 and later, because `QUERY` is a safe method. On Django 4.2 to 6.1 with session
-  authentication you need a token, as for `POST`. See [Django versions before 6.2](#django-versions-before-62).
+* **CSRF.** None needed: `QUERY` is a safe method, so it never needs a CSRF token on any supported Django version. See
+  [Django versions before 6.2](#django-versions-before-62) for how older versions get the same behaviour.
 * **Proxies, CDNs and firewalls.** Some reject request methods they don't recognise. Check that `QUERY` reaches your
   application through everything in front of it.
 * **Caching.** `QUERY` responses are cacheable in principle, but caches generally don't key on request bodies, and
@@ -161,17 +161,21 @@ still read from the URL.
 
 ## Django versions before 6.2
 
-Django 6.2 supports `QUERY` natively. On Django 4.2 to 6.1 this package adds it, with one difference around CSRF.
+Django 6.2 supports `QUERY` natively. On Django 4.2 to 6.1, `add_query_method()` (which `patch()` calls) brings the same
+behaviour to older versions in two ways:
 
-`QUERY` is a safe method, so from Django 6.2 it needs no CSRF token: `CsrfViewMiddleware` skips the check, as it does
-for `GET`, and so does DRF's `SessionAuthentication`, which uses the same check. Before 6.2, that middleware has a fixed
-list of safe methods (`GET`, `HEAD`, `OPTIONS` and `TRACE`) that doesn't include `QUERY`. So on older Django:
+* It adds `query` to Django's allowed view methods, so views can define a `query()` handler.
+* It treats `QUERY` as a safe method in `CsrfViewMiddleware`, as Django 6.2 does. Before 6.2 the middleware only
+  exempts `GET`, `HEAD`, `OPTIONS` and `TRACE`, so without this, session-authenticated `QUERY` requests would need a
+  CSRF token. DRF's `SessionAuthentication` checks CSRF through the same middleware, so it follows suit.
 
-* With **session authentication**, send the CSRF token with `QUERY` requests, as you would for `POST` (for example the
-  `X-CSRFToken` header).
-* With **token or header-based authentication**, nothing changes: DRF doesn't apply CSRF checks to those.
+The result is that `QUERY` never needs a CSRF token, whichever supported Django version you're on. If you call
+`add_query_method()` yourself rather than `patch()`, call it once at startup, before requests are served.
 
-Once you're on Django 6.2, you can stop sending the token.
+This is safe for the same reason it is in Django 6.2. CSRF protects against another site making a logged-in user's
+browser send a request. HTML forms can only send `GET` and `POST`, so `QUERY` can only come from JavaScript, and
+because `QUERY` is not a CORS-safelisted method, the browser asks your server's permission with a preflight request
+before sending a cross-origin one. As with `GET`, a `query()` handler must never change data.
 
 ## Moving to DRF's own support
 

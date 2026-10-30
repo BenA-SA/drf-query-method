@@ -44,15 +44,20 @@ The package is in early development. Releases are on [PyPI](https://pypi.org/pro
 
 ## CSRF
 
-`QUERY` is a safe method, so on Django 6.2 and later it needs no CSRF token: Django skips the check, as it does for
-`GET`. On Django 4.2 to 6.1, where this package adds `QUERY`, Django's CSRF middleware doesn't know it's safe, so
-session-authenticated `QUERY` requests need a CSRF token, as a `POST` would. Token or header-based authentication never
-needs one.
+`QUERY` is a safe method, so it never needs a CSRF token, on any supported Django version. Django 6.2 exempts it from
+CSRF checks itself. On Django 4.2 to 6.1, where this package adds `QUERY`, it also teaches Django's
+`CsrfViewMiddleware` to treat `QUERY` as safe, so the behaviour matches 6.2. DRF's `SessionAuthentication` uses the same
+check, so session-authenticated `QUERY` requests work without a token too.
+
+The trade-off is the one `GET` has always had: a `query()` handler must never change data. Cross-site requests are
+still guarded by CORS, because browsers can only send `QUERY` from JavaScript, and `QUERY` isn't a CORS-safelisted
+method, so a cross-origin request needs your server's permission first.
 
 ## Compatibility
 
 * Python 3.10+
-* Django 4.2, 5.0, 5.1, 5.2, 6.0 and 6.1. Django 6.2 adds `QUERY` natively; on earlier versions this package adds it.
+* Django 4.2, 5.0, 5.1, 5.2, 6.0 and 6.1. Django 6.2 adds `QUERY` natively; on earlier versions this package adds it,
+  including Django 6.2's CSRF behaviour.
 * Django REST framework 3.16+
 * django-filter and django-rest-framework-datatables, optionally
 

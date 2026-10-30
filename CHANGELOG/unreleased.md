@@ -1,3 +1,11 @@
 # Unreleased
 
-Record user-visible changes here before the next release.
+## Changed
+
+- On Django 4.2 to 6.1, `add_query_method()` (and so `patch()`) now treats `QUERY` as a safe method in Django's
+  `CsrfViewMiddleware`, matching Django 6.2. `QUERY` requests no longer need a CSRF token on any supported version,
+  including session-authenticated requests through DRF's `SessionAuthentication`.
+
+## Documentation
+
+- README and usage docs explain CSRF for `QUERY`, and the README no longer says the package is unreleased.

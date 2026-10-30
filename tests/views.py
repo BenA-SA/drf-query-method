@@ -3,7 +3,9 @@
 from django.contrib.auth.models import User
 from django.http.response import HttpResponseRedirectBase
 from rest_framework import generics, serializers
+from rest_framework.authentication import SessionAuthentication
 from rest_framework.decorators import action, api_view
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -72,3 +74,14 @@ class QueryActionViewSet(viewsets.GenericViewSet):
     @action(detail=False, methods=["post"])
     def query(self, request):
         return Response("action")
+
+
+class SessionQueryView(APIView):
+    authentication_classes = [SessionAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def query(self, request):
+        return Response({"method": request.method})
+
+    def post(self, request):
+        return Response({"method": request.method})
