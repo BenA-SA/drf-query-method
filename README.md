@@ -40,7 +40,14 @@ Routers then send `QUERY /notes/` to `query()`, and `SearchFilter`, `OrderingFil
 classes with the same names from `drf_query_method` instead. See the [documentation](https://BenA-SA.github.io/drf-query-method/usage/)
 for both approaches, and for sending `QUERY` requests from JavaScript and other clients.
 
-The package is in early development and not yet released.
+The package is in early development. Releases are on [PyPI](https://pypi.org/project/drf-query-method/).
+
+## CSRF
+
+`QUERY` is a safe method, so on Django 6.2 and later it needs no CSRF token: Django skips the check, as it does for
+`GET`. On Django 4.2 to 6.1, where this package adds `QUERY`, Django's CSRF middleware doesn't know it's safe, so
+session-authenticated `QUERY` requests need a CSRF token, as a `POST` would. Token or header-based authentication never
+needs one.
 
 ## Compatibility
 
