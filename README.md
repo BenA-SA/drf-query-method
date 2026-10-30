@@ -15,7 +15,7 @@ Support for the HTTP `QUERY` method ([RFC 10008](https://www.rfc-editor.org/rfc/
 parameters are too long or too structured for a URL.
 
 * [GitHub](https://github.com/BenA-SA/drf-query-method/) | [PyPI](https://pypi.org/project/drf-query-method/) | [Documentation](https://BenA-SA.github.io/drf-query-method/)
-* Created by [Ben Atkinson](https://streamlinedanalytics.co.uk) | GitHub [@BenA-SA](https://github.com/BenA-SA)
+* Created by [Ben Atkinson](https://streamlinedanalytics.co.uk) | GitHub [@BenA-SA](https://github.com/BenA-SA) | PyPI [@Ben-SA](https://pypi.org/user/Ben-SA/)
 * BSD 3-Clause License
 
 ## Usage
@@ -38,7 +38,7 @@ class NoteViewSet(ModelViewSet):
 Routers then send `QUERY /notes/` to `query()`, and `SearchFilter`, `OrderingFilter` and django-filter's
 `DjangoFilterBackend` read their parameters from the request body. If you'd rather not patch DRF, import drop-in
 classes with the same names from `drf_query_method` instead. See the [documentation](https://BenA-SA.github.io/drf-query-method/usage/)
-for both approaches.
+for both approaches, and for sending `QUERY` requests from JavaScript and other clients.
 
 The package is in early development and not yet released.
 

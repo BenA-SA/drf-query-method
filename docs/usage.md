@@ -95,6 +95,51 @@ Pagination parameters stay in the URL, so the `next` and `previous` links carry 
 Custom filter backends should read their parameters with `drf_query_method.filter_params(request)` rather than
 `request.query_params`.
 
+## Sending QUERY requests
+
+Most HTTP clients accept any method name. With `fetch()`:
+
+```javascript
+const response = await fetch("/api/notes/", {
+  method: "QUERY",
+  headers: {"Content-Type": "application/json"},
+  body: JSON.stringify({search: "django", ordering: "-created"}),
+});
+```
+
+With jQuery, which sends `data` as a form-encoded body for any method other than `GET` and `HEAD`:
+
+```javascript
+$.ajax({url: "/api/notes/", type: "QUERY", data: {search: "django"}});
+```
+
+With curl:
+
+```sh
+curl -X QUERY -H "Content-Type: application/json" -d '{"search": "django"}' https://example.com/api/notes/
+```
+
+A few things to check before relying on `QUERY` in production:
+
+* **CORS.** `QUERY` is not a CORS-safelisted method, so cross-origin requests trigger a preflight request, and
+  the server must list `QUERY` in `Access-Control-Allow-Methods`. With
+  [django-cors-headers](https://github.com/adamchainz/django-cors-headers), add it to `CORS_ALLOW_METHODS`:
+
+    ```python
+    from corsheaders.defaults import default_methods
+
+    CORS_ALLOW_METHODS = (*default_methods, "QUERY")
+    ```
+
+* **CSRF.** On Django versions before 6.2, session-authenticated `QUERY` requests need a CSRF token, the same as
+  `POST`.
+* **Proxies, CDNs and firewalls.** Some reject request methods they don't recognise. Check that `QUERY` reaches your
+  application through everything in front of it.
+* **Caching.** `QUERY` responses are cacheable in principle, but caches generally don't key on request bodies, and
+  Django's `cache_page` ignores `QUERY` from 6.2. Don't expect responses to be cached.
+* **django-rest-framework-datatables** reads its parameters with its own helper, which looks at the request body only
+  for `POST`. It doesn't read `QUERY` bodies yet.
+
 ## Django versions before 6.2
 
 Django 6.2 supports `QUERY` natively. On earlier versions this package adds it, with one difference: Django's CSRF

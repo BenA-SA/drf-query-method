@@ -8,6 +8,7 @@ These are the changes that will go out in the next release.
 - Opt-in routers, viewsets, filters, permissions, test clients and a django-filter backend, named after DRF's.
 - `filter_params()`, the URL query parameters with a `QUERY` request's body merged over them.
 - `add_query_method()`, which lets Django versions before 6.2 dispatch `QUERY`.
+- Documentation for both approaches, and for sending `QUERY` requests from clients.
 
 drf-query-method started out as a project generated from [Cookiecutter PyPackage](https://github.com/audreyfeldroy/cookiecutter-pypackage) containing:
 
