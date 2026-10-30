@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "drf-query-method"
-version = "0.2.0"
+version = "0.3.0"
 description = "HTTP QUERY method (RFC 10008) support for Django REST framework."
 readme = "README.md"
 authors = [
