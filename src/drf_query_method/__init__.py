@@ -10,12 +10,14 @@ There are two ways to use it:
 * Opt-in classes with the same names as DRF's, for example
   ``drf_query_method.filters.SearchFilter``, imported in place of DRF's.
 * :func:`patch`, which applies the same behaviour to DRF itself, and to
-  django-filter when it is installed. Adding ``"drf_query_method"`` to
-  ``INSTALLED_APPS`` calls it at startup.
+  django-filter when it is installed. It also gives every list view a
+  ``query()`` handler, which the opt-in path gets from :class:`QueryMixin`.
+  Adding ``"drf_query_method"`` to ``INSTALLED_APPS`` calls it at startup.
 """
 
 from drf_query_method.methods import add_query_method
+from drf_query_method.mixins import QueryMixin
 from drf_query_method.params import filter_params
 from drf_query_method.patching import patch, unpatch
 
-__all__ = ["add_query_method", "filter_params", "patch", "unpatch"]
+__all__ = ["QueryMixin", "add_query_method", "filter_params", "patch", "unpatch"]

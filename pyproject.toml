@@ -55,6 +55,7 @@ test = [
     "coverage",
     "django-filter",
     "djangorestframework-datatables",
+    "drf-spectacular",
     "pytest",
     "pytest-django",
 ]

@@ -2,11 +2,12 @@
 
 :func:`patch` makes DRF behave as if encode/django-rest-framework#10091 were
 merged, so existing views, routers and settings pick up ``QUERY`` without
-changing imports. When django-filter or django-rest-framework-datatables
-is installed, they read QUERY request bodies too. Adding ``"drf_query_method"``
-to ``INSTALLED_APPS`` calls it at startup; otherwise call it once yourself, for
-example from an ``AppConfig.ready()``. It does nothing to DRF once DRF supports
-``QUERY`` itself.
+changing imports, and gives list views a ``query()`` handler. When
+django-filter or django-rest-framework-datatables is installed, they read
+QUERY request bodies too, and drf-spectacular leaves QUERY out of its schema.
+Adding ``"drf_query_method"`` to ``INSTALLED_APPS`` calls it at startup;
+otherwise call it once yourself, for example from an ``AppConfig.ready()``.
+It does nothing to DRF once DRF supports ``QUERY`` itself.
 """
 
 import importlib.util
@@ -31,7 +32,7 @@ def _patch_drf() -> None:
     from drf_query_method import permissions as query_permissions
     from drf_query_method import test as query_test
     from drf_query_method.params import merge_filter_params
-    from drf_query_method.routers import get_routes_keeping_query_actions, with_query_route
+    from drf_query_method.routers import answer_query_with_list, get_routes_keeping_query_actions, with_query_route
     from drf_query_method.viewsets import drop_unmapped_query
 
     _set(Request, "filter_params", property(merge_filter_params))
@@ -50,6 +51,15 @@ def _patch_drf() -> None:
         lambda router, viewset: get_routes_keeping_query_actions(router, viewset, simple_get_routes),
     )
 
+    simple_get_method_map = routers.SimpleRouter.get_method_map
+    _set(
+        routers.SimpleRouter,
+        "get_method_map",
+        lambda router, viewset, method_map: answer_query_with_list(
+            viewset, simple_get_method_map(router, viewset, method_map)
+        ),
+    )
+
     def dispatch(self, request, *args, **kwargs):
         drop_unmapped_query(self)
         return super(viewsets.ViewSetMixin, self).dispatch(request, *args, **kwargs)
@@ -58,6 +68,37 @@ def _patch_drf() -> None:
     _set(decorators.MethodMapper, "query", lambda self, func: self._map("query", func))
     _set(test.APIRequestFactory, "query", query_test.factory_query)
     _set(test.APIClient, "query", query_test.client_query)
+
+    get_allowed_methods = EndpointEnumerator.get_allowed_methods
+    _set(
+        EndpointEnumerator,
+        "get_allowed_methods",
+        lambda self, callback: [method for method in get_allowed_methods(self, callback) if method != "QUERY"],
+    )
+
+
+def _patch_list_query() -> None:
+    """Give ``ListModelMixin`` a ``query()`` handler that delegates to ``list()``.
+
+    Views that define ``query()`` themselves, or inherit it from a class
+    earlier in their MRO, keep their own. Routers map ``QUERY`` on the list
+    route only, so detail routes still return 405.
+    """
+    from rest_framework import mixins
+
+    from drf_query_method.mixins import QueryMixin
+
+    if "query" not in mixins.ListModelMixin.__dict__:
+        _set(mixins.ListModelMixin, "query", QueryMixin.query)
+
+
+def _patch_drf_spectacular() -> None:
+    """Leave QUERY out of drf-spectacular's schema, as OpenAPI 3.0 has no query operation.
+
+    drf-spectacular enumerates methods itself and fails with ``KeyError: 'query'``
+    on any view with a ``query()`` handler.
+    """
+    from drf_spectacular.generators import EndpointEnumerator
 
     get_allowed_methods = EndpointEnumerator.get_allowed_methods
     _set(
@@ -101,7 +142,13 @@ def _patch_drf_datatables() -> None:
 
 
 def patch() -> None:
-    """Add QUERY support to Django, DRF, django-filter and django-rest-framework-datatables in place.
+    """Add QUERY support to Django, DRF, django-filter, django-rest-framework-datatables and drf-spectacular in place.
+
+    Every view built on DRF's ``ListModelMixin`` answers ``QUERY`` by
+    delegating to ``list()``, unless it defines ``query()`` itself; see
+    :class:`~drf_query_method.mixins.QueryMixin`. This also applies once DRF
+    supports ``QUERY`` itself, as DRF only routes ``QUERY`` to views that
+    define ``query()``.
 
     Adding ``"drf_query_method"`` to ``INSTALLED_APPS`` calls this at startup,
     so most projects never call it directly. Safe to call more than once,
@@ -117,10 +164,13 @@ def patch() -> None:
     add_query_method()
     if not hasattr(Request, "filter_params"):
         _patch_drf()
+    _patch_list_query()
     if importlib.util.find_spec("django_filters") is not None:
         _patch_django_filter()
     if importlib.util.find_spec("rest_framework_datatables") is not None:
         _patch_drf_datatables()
+    if importlib.util.find_spec("drf_spectacular") is not None:
+        _patch_drf_spectacular()
 
 
 def unpatch() -> None:
