@@ -42,7 +42,7 @@ qa: fix-and-check
 
 # Run the tests against one Django and DRF combination, e.g. `just test-against 3.10 4.2 3.16`
 test-against PYTHON DJANGO DRF:
-    uv run --isolated --no-project --python={{PYTHON}} --with-editable . --with "django~={{DJANGO}}.0" --with "djangorestframework~={{DRF}}.0" --with pytest --with pytest-django pytest
+    uv run --isolated --no-project --python={{PYTHON}} --with-editable . --with "django~={{DJANGO}}.0" --with "djangorestframework~={{DRF}}.0" --with django-filter --with djangorestframework-datatables --with drf-spectacular --with pytest --with pytest-django pytest
 
 # Run the tests across the oldest and newest supported combinations
 testall:

@@ -14,7 +14,23 @@ class SearchNotes(APIView):
         return Response(NoteSerializer(notes, many=True).data)
 ```
 
-Generic views and viewsets don't provide `query()`, so a list view that should accept `QUERY` delegates to `list()`:
+A list view answers `QUERY` by delegating to `list()`, so its filters can travel in the request body. With
+[`patch()`](#option-1-patch-drf), every view built on DRF's `ListModelMixin` gets that handler, including
+`ListAPIView`, `ModelViewSet` and `ReadOnlyModelViewSet`. Without it, add `QueryMixin`, which works with any view that
+has a `list()` method:
+
+```python
+from drf_query_method import QueryMixin
+
+
+class NoteViewSet(QueryMixin, ModelViewSet):
+    queryset = Note.objects.all()
+    serializer_class = NoteSerializer
+    filter_backends = [SearchFilter]
+    search_fields = ["title"]
+```
+
+Either way, a view that defines its own `query()` keeps it. That handler is a plain method:
 
 ```python
 class NoteViewSet(ModelViewSet):
@@ -61,21 +77,33 @@ class NotesConfig(AppConfig):
 DRF then behaves as if [encode/django-rest-framework#10091](https://github.com/encode/django-rest-framework/pull/10091)
 were merged:
 
-* `SimpleRouter` and `DefaultRouter` route `QUERY` to a viewset's `query()` on the list route only. An existing
-  `@action` named `query` keeps its own route.
+* Every view built on `ListModelMixin` has a `query()` handler that delegates to `list()`, unless it defines its own.
+  This includes generic list views such as `ListAPIView` and `ListCreateAPIView`, not just viewsets.
+* `SimpleRouter` and `DefaultRouter` route `QUERY` to a viewset's `query()` on the list route only, so detail routes
+  return 405. An existing `@action` named `query` keeps its own route.
 * `QUERY` is in `permissions.SAFE_METHODS`, and needs no permissions in `DjangoModelPermissions` and
   `DjangoObjectPermissions`.
 * `request.filter_params` merges a `QUERY` request's body over its URL query parameters, and `SearchFilter` and
   `OrderingFilter` read from it.
 * `@action(...).mapping.query`, `APIRequestFactory.query()` and `APIClient.query()` are available.
-* DRF's deprecated OpenAPI generator leaves `QUERY` out, as OpenAPI 3.0 has no query operation.
+* DRF's deprecated OpenAPI generator leaves `QUERY` out, as OpenAPI 3.0 has no query operation. If
+  [drf-spectacular](https://github.com/tfranzel/drf-spectacular) is installed, it leaves `QUERY` out too, rather than
+  failing on views with a `query()` handler.
 * If [django-filter](https://github.com/carltongibson/django-filter) is installed, `DjangoFilterBackend` reads the
   request body too.
 * If [django-rest-framework-datatables](https://github.com/izimobil/django-rest-framework-datatables) is installed, its
   filter backends, pagination and renderer read the request body too. See [DataTables](#datatables) below.
 
-`patch()` is safe to call more than once, including alongside the installed app, and leaves DRF alone once DRF
-supports `QUERY` itself.
+To keep a list view from answering `QUERY`, leave `query` out of its `http_method_names`:
+
+```python
+class NoteList(ListAPIView):
+    http_method_names = [method for method in ListAPIView.http_method_names if method != "query"]
+```
+
+`patch()` is safe to call more than once, including alongside the installed app. Once DRF supports `QUERY` itself, `patch()` leaves DRF's routers, filters and
+permissions alone, but still gives list views their `query()` handler, as DRF only routes `QUERY` to views that define
+one.
 
 ## Option 2: opt-in classes
 
@@ -90,6 +118,22 @@ Every class has the same name as DRF's (or django-filter's), so you change the i
 | `rest_framework.permissions.IsAuthenticatedOrReadOnly`, `DjangoModelPermissions`, `DjangoModelPermissionsOrAnonReadOnly`, `DjangoObjectPermissions`, `SAFE_METHODS` | `drf_query_method.permissions` |
 | `rest_framework.test.APIRequestFactory`, `APIClient`, `APITestCase` and friends | `drf_query_method.test` |
 | `django_filters.rest_framework.DjangoFilterBackend` | `drf_query_method.django_filters` |
+
+DRF's views have no `query()` handler on this path, so add `QueryMixin` to the list views that should accept `QUERY`
+(or define `query()` yourself). It works with these viewsets and with DRF's generic views:
+
+```python
+from drf_query_method import QueryMixin
+from drf_query_method.filters import SearchFilter
+from drf_query_method.viewsets import ModelViewSet
+
+
+class NoteViewSet(QueryMixin, ModelViewSet):
+    queryset = Note.objects.all()
+    serializer_class = NoteSerializer
+    filter_backends = [SearchFilter]
+    search_fields = ["title"]
+```
 
 django-rest-framework-datatables is supported through `patch()` only.
 
@@ -172,7 +216,7 @@ new DataTable("#notes", {
 ```
 
 jQuery sends DataTables' parameters as a form-encoded body for any method other than `GET` and `HEAD`, which is the
-form django-rest-framework-datatables expects. The view needs a `query()` handler, as above. Its `?keep=` parameter is
+form django-rest-framework-datatables expects. With `patch()`, the list view already has a `query()` handler. Its `?keep=` parameter is
 still read from the URL.
 
 ## Django versions before 6.2
@@ -197,3 +241,6 @@ before sending a cross-origin one. As with `GET`, a `query()` handler must never
 
 If DRF adds `QUERY` support, remove `drf_query_method` from `INSTALLED_APPS` (or remove the `patch()` call, or switch
 the imports back to DRF's) and uninstall this package. Your `query()` handlers, `request.filter_params` and test code keep working.
+
+DRF's own support only routes `QUERY` to views that define `query()`. Before uninstalling, give each list view that
+relies on `patch()`'s automatic handler, or on `QueryMixin`, a `query()` handler of its own.
