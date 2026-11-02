@@ -29,7 +29,21 @@ are two ways to do that.
 
 ## Option 1: patch DRF
 
-Call `patch()` once at startup, for example in one of your apps' `AppConfig.ready()`:
+Add the package to `INSTALLED_APPS`:
+
+```python
+INSTALLED_APPS = [
+    ...
+    "rest_framework",
+    "drf_query_method",
+]
+```
+
+Its `AppConfig.ready()` calls `drf_query_method.patch()` when Django starts. The app has no models, migrations,
+templates or URLs, so that is all it does.
+
+If you'd rather patch DRF explicitly, leave the app out and call `patch()` once at startup yourself, for example in one
+of your apps' `AppConfig.ready()`:
 
 ```python
 from django.apps import AppConfig
@@ -60,11 +74,13 @@ were merged:
 * If [django-rest-framework-datatables](https://github.com/izimobil/django-rest-framework-datatables) is installed, its
   filter backends, pagination and renderer read the request body too. See [DataTables](#datatables) below.
 
-`patch()` is safe to call more than once, and leaves DRF alone once DRF supports `QUERY` itself.
+`patch()` is safe to call more than once, including alongside the installed app, and leaves DRF alone once DRF
+supports `QUERY` itself.
 
 ## Option 2: opt-in classes
 
-Every class has the same name as DRF's (or django-filter's), so you change the import rather than the code:
+Every class has the same name as DRF's (or django-filter's), so you change the import rather than the code. Don't add
+`drf_query_method` to `INSTALLED_APPS` on this path, as that patches DRF:
 
 | Instead of | Import |
 |---|---|
@@ -179,5 +195,5 @@ before sending a cross-origin one. As with `GET`, a `query()` handler must never
 
 ## Moving to DRF's own support
 
-If DRF adds `QUERY` support, remove the `patch()` call (or switch the imports back to DRF's) and uninstall this
-package. Your `query()` handlers, `request.filter_params` and test code keep working.
+If DRF adds `QUERY` support, remove `drf_query_method` from `INSTALLED_APPS` (or remove the `patch()` call, or switch
+the imports back to DRF's) and uninstall this package. Your `query()` handlers, `request.filter_params` and test code keep working.

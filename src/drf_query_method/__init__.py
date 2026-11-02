@@ -10,7 +10,8 @@ There are two ways to use it:
 * Opt-in classes with the same names as DRF's, for example
   ``drf_query_method.filters.SearchFilter``, imported in place of DRF's.
 * :func:`patch`, which applies the same behaviour to DRF itself, and to
-  django-filter when it is installed.
+  django-filter when it is installed. Adding ``"drf_query_method"`` to
+  ``INSTALLED_APPS`` calls it at startup.
 """
 
 from drf_query_method.methods import add_query_method

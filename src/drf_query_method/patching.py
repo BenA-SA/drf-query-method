@@ -3,9 +3,10 @@
 :func:`patch` makes DRF behave as if encode/django-rest-framework#10091 were
 merged, so existing views, routers and settings pick up ``QUERY`` without
 changing imports. When django-filter or django-rest-framework-datatables
-is installed, they read QUERY request bodies too. Call it once at startup,
-for example from an ``AppConfig.ready()``. It does nothing to DRF once DRF supports ``QUERY``
-itself.
+is installed, they read QUERY request bodies too. Adding ``"drf_query_method"``
+to ``INSTALLED_APPS`` calls it at startup; otherwise call it once yourself, for
+example from an ``AppConfig.ready()``. It does nothing to DRF once DRF supports
+``QUERY`` itself.
 """
 
 import importlib.util
@@ -102,7 +103,9 @@ def _patch_drf_datatables() -> None:
 def patch() -> None:
     """Add QUERY support to Django, DRF, django-filter and django-rest-framework-datatables in place.
 
-    Safe to call more than once. On Django versions before 6.2 this also
+    Adding ``"drf_query_method"`` to ``INSTALLED_APPS`` calls this at startup,
+    so most projects never call it directly. Safe to call more than once,
+    including alongside the installed app. On Django versions before 6.2 this also
     calls :func:`~drf_query_method.add_query_method`, which :func:`unpatch`
     does not undo.
     """

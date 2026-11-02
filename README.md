@@ -20,14 +20,19 @@ parameters are too long or too structured for a URL.
 
 ## Usage
 
-Define a `query()` handler, then call `patch()` once at startup:
+Add the package to `INSTALLED_APPS`, which applies `QUERY` support to DRF at startup:
 
 ```python
-import drf_query_method
+INSTALLED_APPS = [
+    ...
+    "rest_framework",
+    "drf_query_method",
+]
+```
 
-drf_query_method.patch()
+Then define a `query()` handler on each view that should accept `QUERY`:
 
-
+```python
 class NoteViewSet(ModelViewSet):
     ...
 
@@ -36,9 +41,12 @@ class NoteViewSet(ModelViewSet):
 ```
 
 Routers then send `QUERY /notes/` to `query()`, and `SearchFilter`, `OrderingFilter`, django-filter's
-`DjangoFilterBackend` and django-rest-framework-datatables read their parameters from the request body. If you'd rather not patch DRF, import drop-in
-classes with the same names from `drf_query_method` instead. See the [documentation](https://BenA-SA.github.io/drf-query-method/usage/)
-for both approaches, and for sending `QUERY` requests from JavaScript and other clients.
+`DjangoFilterBackend` and django-rest-framework-datatables read their parameters from the request body.
+
+If you'd rather call `drf_query_method.patch()` yourself, leave the app out of `INSTALLED_APPS`. If you'd rather not
+patch DRF at all, import drop-in classes with the same names from `drf_query_method` instead. See the
+[documentation](https://BenA-SA.github.io/drf-query-method/usage/) for each approach, and for sending `QUERY` requests
+from JavaScript and other clients.
 
 The package is in early development. Releases are on [PyPI](https://pypi.org/project/drf-query-method/).
 
