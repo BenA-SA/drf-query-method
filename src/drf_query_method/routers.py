@@ -4,6 +4,8 @@ import copy
 
 from rest_framework import routers
 
+from drf_query_method.mixins import delegates_query_to_list
+
 
 def _is_list_route(route) -> bool:
     return isinstance(route, routers.Route) and route.mapping.get("get") == "list"
@@ -46,8 +48,23 @@ def get_routes_keeping_query_actions(router, viewset, get_routes):
     return get_routes(router_without_query, viewset)
 
 
+def answer_query_with_list(viewset, method_map):
+    """Route QUERY to the ``list`` action when the viewset's ``query()`` only delegates to ``list()``.
+
+    ``self.action`` is then ``"list"`` for QUERY requests, so a viewset that
+    picks its serializer, queryset or permissions by action treats QUERY like
+    GET. A viewset with its own ``query()`` keeps the ``query`` action.
+    """
+    if method_map.get("query") == "query" and delegates_query_to_list(viewset):
+        return {**method_map, "query": "list"}
+    return method_map
+
+
 class QueryRouterMixin:
     routes = with_query_route(routers.SimpleRouter.routes)
+
+    def get_method_map(self, viewset, method_map):
+        return answer_query_with_list(viewset, super().get_method_map(viewset, method_map))  # ty: ignore[unresolved-attribute]
 
     def get_routes(self, viewset):
         return get_routes_keeping_query_actions(self, viewset, super(QueryRouterMixin, type(self)).get_routes)  # ty: ignore[unresolved-attribute]

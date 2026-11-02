@@ -30,7 +30,11 @@ class NoteViewSet(QueryMixin, ModelViewSet):
     search_fields = ["title"]
 ```
 
-Either way, a view that defines its own `query()` keeps it. That handler is a plain method:
+On a viewset, the routers send `QUERY` straight to the `list` action, so `self.action` is `"list"` and a
+`get_serializer_class()`, `get_queryset()` or `get_permissions()` that branches on it treats `QUERY` like `GET`.
+
+Either way, a view that defines its own `query()` keeps it, and runs as the `query` action. That handler is a plain
+method:
 
 ```python
 class NoteViewSet(ModelViewSet):

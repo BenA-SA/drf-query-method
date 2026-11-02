@@ -32,7 +32,7 @@ def _patch_drf() -> None:
     from drf_query_method import permissions as query_permissions
     from drf_query_method import test as query_test
     from drf_query_method.params import merge_filter_params
-    from drf_query_method.routers import get_routes_keeping_query_actions, with_query_route
+    from drf_query_method.routers import answer_query_with_list, get_routes_keeping_query_actions, with_query_route
     from drf_query_method.viewsets import drop_unmapped_query
 
     _set(Request, "filter_params", property(merge_filter_params))
@@ -49,6 +49,15 @@ def _patch_drf() -> None:
         routers.SimpleRouter,
         "get_routes",
         lambda router, viewset: get_routes_keeping_query_actions(router, viewset, simple_get_routes),
+    )
+
+    simple_get_method_map = routers.SimpleRouter.get_method_map
+    _set(
+        routers.SimpleRouter,
+        "get_method_map",
+        lambda router, viewset, method_map: answer_query_with_list(
+            viewset, simple_get_method_map(router, viewset, method_map)
+        ),
     )
 
     def dispatch(self, request, *args, **kwargs):

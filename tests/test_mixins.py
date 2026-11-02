@@ -77,3 +77,10 @@ def test_view_defined_query_wins(client):
 def test_drf_classes_are_not_patched():
     assert "query" not in mixins.ListModelMixin.__dict__
     assert not hasattr(viewsets.ModelViewSet, "query")
+
+
+def test_query_runs_as_the_list_action():
+    list_view = next(url.callback for url in router.urls if url.name == "users-list")
+    own_view = next(url.callback for url in router.urls if url.name == "own-list")
+    assert list_view.actions["query"] == "list"
+    assert own_view.actions["query"] == "query"

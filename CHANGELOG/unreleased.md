@@ -9,7 +9,8 @@ Record user-visible changes here before the next release.
   explicitly, and the opt-in classes are unaffected when the app isn't installed.
 - `QueryMixin` gives a list view a `query()` handler that delegates to `list()`, so `QUERY` no longer needs a
   hand-written handler on each view: `class NoteViewSet(QueryMixin, ModelViewSet)`. It works with any view that has a
-  `list()` method.
+  `list()` method. The routers send `QUERY` on such a viewset to the `list` action, so `self.action` is `"list"` and
+  action-based serializer, queryset and permission choices treat `QUERY` like `GET`.
 
 ## Changed
 

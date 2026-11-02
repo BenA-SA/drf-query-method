@@ -1,7 +1,7 @@
 import django_filters.rest_framework
 import pytest
 from django.contrib.auth.models import User
-from rest_framework import filters, generics, mixins, permissions, routers, viewsets
+from rest_framework import filters, generics, mixins, permissions, routers, serializers, viewsets
 from rest_framework.decorators import action
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -9,6 +9,7 @@ from rest_framework.schemas.generators import EndpointEnumerator
 from rest_framework.test import APIClient, APIRequestFactory
 
 from drf_query_method import patch, unpatch
+from drf_query_method import routers as query_routers
 from tests.views import UserSerializer
 
 
@@ -186,3 +187,35 @@ def test_drf_spectacular_schema_skips_query(patched):
     router.register("users", SchemaViewSet, basename="users")
     schema = SchemaGenerator(patterns=router.urls).get_schema(request=None, public=True)
     assert set(schema["paths"]["/users/"]) == {"get", "post"}
+
+
+class DetailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ["id", "username", "is_staff"]
+
+
+class ActionAwareViewSet(viewsets.ModelViewSet):
+    queryset = User.objects.order_by("pk")
+
+    def get_serializer_class(self):
+        return UserSerializer if self.action == "list" else DetailSerializer
+
+
+class OwnQueryActionAwareViewSet(ActionAwareViewSet):
+    def query(self, request, *args, **kwargs):
+        return Response(self.action)
+
+
+@pytest.mark.parametrize("router_class", [routers.SimpleRouter, query_routers.SimpleRouter])
+def test_query_runs_as_the_list_action(patched, users, router_class):
+    router = router_class()
+    router.register("users", ActionAwareViewSet, basename="users")
+    router.register("own", OwnQueryActionAwareViewSet, basename="own")
+    list_view = next(url.callback for url in router.urls if url.name == "users-list")
+    own_view = next(url.callback for url in router.urls if url.name == "own-list")
+    factory = APIRequestFactory()
+
+    response = list_view(factory.query("/users/", {}, format="json"))
+    assert set(response.data[0]) == {"id", "username"}
+    assert own_view(factory.query("/own/", {}, format="json")).data == "query"
